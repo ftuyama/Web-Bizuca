@@ -10,11 +10,12 @@ import java.util.logging.Logger;
 public class Game extends JPanel
 {
     Config cfg = Config.getInstance();
+    BancoDados BDados = new BancoDados();
     
     private JButton jplay, jexit, jteste, jreset;
     private JTextField jtempo, jmusica, jbots, jsaude;
     private JLabel jtexto1, jtexto2, jtexto3, jtexto4;
-    private JLabel jex1, jex2, jTitle, jCredit;
+    private JLabel jex1, jex2, jTitle, jCredit, jload;
     
     Random gerador = new Random();
     boolean Start = false, AllAI = false, VersaoTeste = false;
@@ -24,6 +25,7 @@ public class Game extends JPanel
     float Sin, Cos, Theta;
     int AbsX, AbsY, Xp, Yp, xVet, yVet;
     int nbots, distance, tempo = 0;
+    String sucess ="";
     
     Fase fase = new Fase();
     Musica Music = new Musica();
@@ -44,6 +46,7 @@ public class Game extends JPanel
     
     public Game() 
     {
+        if(!BDados.conecta()) sucess = "Não";
         setFocusable(true);
         setBounds(0, 0, cfg.HTela, cfg.VTela);
         setLayout(null);
@@ -77,6 +80,8 @@ public class Game extends JPanel
     public void init()
     {
         int H = 400, D = 150, V = 150;
+        
+        jload = new JLabel ("MySQL "+sucess+" carregado!"); jload.setBounds(600, 600, 200, 30); add(jload);
         jtexto1 = new JLabel("Música?"); jtexto1.setBounds(H, V, 200, 30); add(jtexto1);
         jtexto2 = new JLabel("Nº Bots:"); jtexto2.setBounds(H, V+50, 200, 30); add(jtexto2);
         jtexto3 = new JLabel("Regenaração?"); jtexto3.setBounds(H, V+100, 200, 30); add(jtexto3);
@@ -101,7 +106,7 @@ public class Game extends JPanel
         jsaude.setBounds(H+D,V+100,200,30); add(jsaude);
         jtempo = new JTextField(""+cfg.Tmax); jtempo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jtempo.setBounds(H+D,V+150,200,30); add(jtempo);
-		
+        
         
 	jplay = new JButton ("Play"); jplay.setBounds(cfg.HTela/2, 350, 100, 40); add(jplay);
 	jteste = new JButton ("Versão Teste"); jteste.setBounds(0, 0, 200, 40); add(jteste);

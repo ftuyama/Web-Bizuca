@@ -7,9 +7,6 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Config 
 {
@@ -79,182 +76,182 @@ public class Config
         return xmlString;
     }
 
-    public void gerarXml() throws Exception 
-    {
-        if (file.exists()) file.delete();
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db = dbf.newDocumentBuilder();
-        Document doc = db.newDocument();
-        
-        Element tagConfig = doc.createElement("Config");
-        
-            Element subTagWindowConfig = doc.createElement("Config_Window");
-        
-                Element WindowTitle = doc.createElement("Title");
-                Element WindowWidth = doc.createElement("Window_Width");
-                Element WindowHeigth = doc.createElement("Window_Height");
-                
-                WindowTitle.setTextContent("Web Bizuca");
-                WindowWidth.setTextContent(""+HTela);
-                WindowHeigth.setTextContent(""+VTela);
-    
-                subTagWindowConfig.appendChild(WindowTitle);
-                subTagWindowConfig.appendChild(WindowWidth);
-                subTagWindowConfig.appendChild(WindowHeigth);
-        
-            Element subTagImagensConfig = doc.createElement("Config_Imagens");
-            
-                Element ImagemBot = doc.createElement("bot_");
-                Element ImagemBala = doc.createElement("bala_");
-                Element ImagemTiro = doc.createElement("tiro_");
-                Element ImagemIntro = doc.createElement("intro_");
-                Element ImagemMusica = doc.createElement("musica_");
-                Element ImagemPlayer = doc.createElement("player_");
-                Element ImagemVitoria = doc.createElement("vitoria_");
-                Element ImagemGameOver = doc.createElement("gameover_");
-                Element ImagemFaseDesign = doc.createElement("fasedesign_");
-                
-                ImagemBot.setTextContent(bot_);
-                ImagemBala.setTextContent(bala_);
-                ImagemTiro.setTextContent(tiro_);
-                ImagemIntro.setTextContent(intro_);
-                ImagemMusica.setTextContent(musica_);
-                ImagemPlayer.setTextContent(player_);
-                ImagemVitoria.setTextContent(vitoria_);
-                ImagemGameOver.setTextContent(gameover_);
-                ImagemFaseDesign.setTextContent(fasedesign_);
-                
-                subTagImagensConfig.appendChild(ImagemBot);
-                subTagImagensConfig.appendChild(ImagemBala);
-                subTagImagensConfig.appendChild(ImagemTiro);
-                subTagImagensConfig.appendChild(ImagemIntro);
-                subTagImagensConfig.appendChild(ImagemMusica);
-                subTagImagensConfig.appendChild(ImagemPlayer);
-                subTagImagensConfig.appendChild(ImagemVitoria);
-                subTagImagensConfig.appendChild(ImagemGameOver);
-                subTagImagensConfig.appendChild(ImagemFaseDesign);
-        
-        
-            Element subTagGamePlayConfig = doc.createElement("Config_Gameplay");
-            
-                Element subTagGamePlayConfigPlayer = doc.createElement("Config_Gameplay_Player");
+        public void gerarXml() throws Exception 
+        {
+            if (file.exists()) file.delete();
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document doc = db.newDocument();
 
-                    Element GamePlayPlayerHP = doc.createElement("PlayerHP");
-                    Element GamePlayPlayerXinic = doc.createElement("PlayerXinic");
-                    Element GamePlayPlayerYinic = doc.createElement("PlayerYinic");
-                    Element GamePlayPlayerSpeed = doc.createElement("PlayerSpeed");
-                    Element GamePlayVPlayer = doc.createElement("Vplayer");
-                    
-                    GamePlayPlayerHP.setTextContent(""+PlayerHP);
-                    GamePlayPlayerXinic.setTextContent(""+PlayerXinic);
-                    GamePlayPlayerYinic.setTextContent(""+PlayerYinic);
-                    GamePlayPlayerSpeed.setTextContent(""+PlayerSpeed);
-                    GamePlayVPlayer.setTextContent(""+Vplayer);
-                    
-                    subTagGamePlayConfigPlayer.appendChild(GamePlayPlayerHP);
-                    subTagGamePlayConfigPlayer.appendChild(GamePlayPlayerXinic);
-                    subTagGamePlayConfigPlayer.appendChild(GamePlayPlayerYinic);
-                    subTagGamePlayConfigPlayer.appendChild(GamePlayPlayerSpeed);
-                    subTagGamePlayConfigPlayer.appendChild(GamePlayVPlayer);
-                    
-                subTagGamePlayConfig.appendChild(subTagGamePlayConfigPlayer);
-                    
-                
-                Element subTagGamePlayConfigBot = doc.createElement("Config_Gameplay_Bot");
-                
-                    Element GamePlayBotHP = doc.createElement("BotHP");
-                    Element GamePlayBotSpeed = doc.createElement("BotSpeed");
-                    Element GamePlayVBot = doc.createElement("Vbot");
-                    
-                    GamePlayBotHP.setTextContent(""+BotHP);
-                    GamePlayBotSpeed.setTextContent(""+BotSpeed);
-                    GamePlayVBot.setTextContent(""+Vbot);
-                    
-                    subTagGamePlayConfigBot.appendChild(GamePlayBotHP);
-                    subTagGamePlayConfigBot.appendChild(GamePlayBotSpeed);
-                    subTagGamePlayConfigBot.appendChild(GamePlayVBot);
-                    
-                subTagGamePlayConfig.appendChild(subTagGamePlayConfigBot);
-                
-                
-                Element subTagGamePlayConfigTime = doc.createElement("Config_Gameplay_Time");
-                
-                    Element GamePlaySleepTime = doc.createElement("SleepTime");
-                    Element GamePlayEventTime = doc.createElement("EventTime");
-                    Element GamePlayTrecharge = doc.createElement("Trecharge");
-                    
-                    GamePlaySleepTime.setTextContent(""+SleepTime);
-                    GamePlaySleepTime.setTextContent(""+EventTime);
-                    GamePlayTrecharge.setTextContent(""+Trecharge);
-                    
-                    subTagGamePlayConfigTime.appendChild(GamePlaySleepTime);
-                    subTagGamePlayConfigTime.appendChild(GamePlayEventTime);
-                    subTagGamePlayConfigTime.appendChild(GamePlayTrecharge);
-                    
-                subTagGamePlayConfig.appendChild(subTagGamePlayConfigTime);
-                
-                
-                Element subTagGamePlayConfigOther = doc.createElement("Config_Gameplay_Other");
-                
-                    Element GamePlayNBullets = doc.createElement("NBullets");
-                    Element GamePlayBulletSpeed = doc.createElement("BulletSpeed");
-                    Element GamePlayRcontain = doc.createElement("Rcontain");
-                    Element GamePlayVparede = doc.createElement("Vparede");
-                    Element GamePlayStress= doc.createElement("Stress");
-                    
-                    GamePlayNBullets.setTextContent(""+NBullets);
-                    GamePlayBulletSpeed.setTextContent(""+BulletSpeed);
-                    GamePlayRcontain.setTextContent(""+Rcontain);
-                    GamePlayVparede.setTextContent(""+Vparede);
-                    GamePlayStress.setTextContent(""+Stress);
-                
-                    subTagGamePlayConfig.appendChild(GamePlayNBullets);
-                    subTagGamePlayConfig.appendChild(GamePlayBulletSpeed);
-                    subTagGamePlayConfig.appendChild(GamePlayRcontain);
-                    subTagGamePlayConfig.appendChild(GamePlayVparede);
-                    subTagGamePlayConfig.appendChild(GamePlayStress);
-                    
-                subTagGamePlayConfig.appendChild(subTagGamePlayConfigOther);
-                
-            Element subTagMenuConfig = doc.createElement("Config_Menu");
-            
-                    Element MenuTmax = doc.createElement("Tmax");
-                    Element MenuNbots = doc.createElement("Nbots");
-                    Element MenuRecover = doc.createElement("Recover");
-                    Element MenuMusicOn = doc.createElement("MusicOn");
+            Element tagConfig = doc.createElement("Config");
 
-                    MenuTmax.setTextContent(""+Tmax);
-                    MenuNbots.setTextContent(""+Nbots);
-                    MenuRecover.setTextContent(""+recover);
-                    MenuMusicOn.setTextContent(""+MusicOn);
+                Element subTagWindowConfig = doc.createElement("Config_Window");
 
-                    subTagMenuConfig.appendChild(MenuTmax);
-                    subTagMenuConfig.appendChild(MenuNbots);
-                    subTagMenuConfig.appendChild(MenuRecover);
-                    subTagMenuConfig.appendChild(MenuMusicOn);
+                    Element WindowTitle = doc.createElement("Title");
+                    Element WindowWidth = doc.createElement("Window_Width");
+                    Element WindowHeigth = doc.createElement("Window_Height");
 
-            tagConfig.appendChild(subTagWindowConfig);
-            tagConfig.appendChild(subTagImagensConfig);
-            tagConfig.appendChild(subTagGamePlayConfig);
-            tagConfig.appendChild(subTagMenuConfig);
+                    WindowTitle.setTextContent("Web Bizuca");
+                    WindowWidth.setTextContent(""+HTela);
+                    WindowHeigth.setTextContent(""+VTela);
 
-        doc.appendChild(tagConfig);
-        
-        String arquivo = converter(doc);
-        salvarArquivo(arquivo);
-    }
-    
-    public static String getChildTagValue(Element elem, String tagName) throws Exception {
-        NodeList children = elem.getElementsByTagName(tagName);
-        String result = null;
-        if (children == null)
+                    subTagWindowConfig.appendChild(WindowTitle);
+                    subTagWindowConfig.appendChild(WindowWidth);
+                    subTagWindowConfig.appendChild(WindowHeigth);
+
+                Element subTagImagensConfig = doc.createElement("Config_Imagens");
+
+                    Element ImagemBot = doc.createElement("bot_");
+                    Element ImagemBala = doc.createElement("bala_");
+                    Element ImagemTiro = doc.createElement("tiro_");
+                    Element ImagemIntro = doc.createElement("intro_");
+                    Element ImagemMusica = doc.createElement("musica_");
+                    Element ImagemPlayer = doc.createElement("player_");
+                    Element ImagemVitoria = doc.createElement("vitoria_");
+                    Element ImagemGameOver = doc.createElement("gameover_");
+                    Element ImagemFaseDesign = doc.createElement("fasedesign_");
+
+                    ImagemBot.setTextContent(bot_);
+                    ImagemBala.setTextContent(bala_);
+                    ImagemTiro.setTextContent(tiro_);
+                    ImagemIntro.setTextContent(intro_);
+                    ImagemMusica.setTextContent(musica_);
+                    ImagemPlayer.setTextContent(player_);
+                    ImagemVitoria.setTextContent(vitoria_);
+                    ImagemGameOver.setTextContent(gameover_);
+                    ImagemFaseDesign.setTextContent(fasedesign_);
+
+                    subTagImagensConfig.appendChild(ImagemBot);
+                    subTagImagensConfig.appendChild(ImagemBala);
+                    subTagImagensConfig.appendChild(ImagemTiro);
+                    subTagImagensConfig.appendChild(ImagemIntro);
+                    subTagImagensConfig.appendChild(ImagemMusica);
+                    subTagImagensConfig.appendChild(ImagemPlayer);
+                    subTagImagensConfig.appendChild(ImagemVitoria);
+                    subTagImagensConfig.appendChild(ImagemGameOver);
+                    subTagImagensConfig.appendChild(ImagemFaseDesign);
+
+
+                Element subTagGamePlayConfig = doc.createElement("Config_Gameplay");
+
+                    Element subTagGamePlayConfigPlayer = doc.createElement("Config_Gameplay_Player");
+
+                        Element GamePlayPlayerHP = doc.createElement("PlayerHP");
+                        Element GamePlayPlayerXinic = doc.createElement("PlayerXinic");
+                        Element GamePlayPlayerYinic = doc.createElement("PlayerYinic");
+                        Element GamePlayPlayerSpeed = doc.createElement("PlayerSpeed");
+                        Element GamePlayVPlayer = doc.createElement("Vplayer");
+
+                        GamePlayPlayerHP.setTextContent(""+PlayerHP);
+                        GamePlayPlayerXinic.setTextContent(""+PlayerXinic);
+                        GamePlayPlayerYinic.setTextContent(""+PlayerYinic);
+                        GamePlayPlayerSpeed.setTextContent(""+PlayerSpeed);
+                        GamePlayVPlayer.setTextContent(""+Vplayer);
+
+                        subTagGamePlayConfigPlayer.appendChild(GamePlayPlayerHP);
+                        subTagGamePlayConfigPlayer.appendChild(GamePlayPlayerXinic);
+                        subTagGamePlayConfigPlayer.appendChild(GamePlayPlayerYinic);
+                        subTagGamePlayConfigPlayer.appendChild(GamePlayPlayerSpeed);
+                        subTagGamePlayConfigPlayer.appendChild(GamePlayVPlayer);
+
+                    subTagGamePlayConfig.appendChild(subTagGamePlayConfigPlayer);
+
+
+                    Element subTagGamePlayConfigBot = doc.createElement("Config_Gameplay_Bot");
+
+                        Element GamePlayBotHP = doc.createElement("BotHP");
+                        Element GamePlayBotSpeed = doc.createElement("BotSpeed");
+                        Element GamePlayVBot = doc.createElement("Vbot");
+
+                        GamePlayBotHP.setTextContent(""+BotHP);
+                        GamePlayBotSpeed.setTextContent(""+BotSpeed);
+                        GamePlayVBot.setTextContent(""+Vbot);
+
+                        subTagGamePlayConfigBot.appendChild(GamePlayBotHP);
+                        subTagGamePlayConfigBot.appendChild(GamePlayBotSpeed);
+                        subTagGamePlayConfigBot.appendChild(GamePlayVBot);
+
+                    subTagGamePlayConfig.appendChild(subTagGamePlayConfigBot);
+
+
+                    Element subTagGamePlayConfigTime = doc.createElement("Config_Gameplay_Time");
+
+                        Element GamePlaySleepTime = doc.createElement("SleepTime");
+                        Element GamePlayEventTime = doc.createElement("EventTime");
+                        Element GamePlayTrecharge = doc.createElement("Trecharge");
+
+                        GamePlaySleepTime.setTextContent(""+SleepTime);
+                        GamePlaySleepTime.setTextContent(""+EventTime);
+                        GamePlayTrecharge.setTextContent(""+Trecharge);
+
+                        subTagGamePlayConfigTime.appendChild(GamePlaySleepTime);
+                        subTagGamePlayConfigTime.appendChild(GamePlayEventTime);
+                        subTagGamePlayConfigTime.appendChild(GamePlayTrecharge);
+
+                    subTagGamePlayConfig.appendChild(subTagGamePlayConfigTime);
+
+
+                    Element subTagGamePlayConfigOther = doc.createElement("Config_Gameplay_Other");
+
+                        Element GamePlayNBullets = doc.createElement("NBullets");
+                        Element GamePlayBulletSpeed = doc.createElement("BulletSpeed");
+                        Element GamePlayRcontain = doc.createElement("Rcontain");
+                        Element GamePlayVparede = doc.createElement("Vparede");
+                        Element GamePlayStress= doc.createElement("Stress");
+
+                        GamePlayNBullets.setTextContent(""+NBullets);
+                        GamePlayBulletSpeed.setTextContent(""+BulletSpeed);
+                        GamePlayRcontain.setTextContent(""+Rcontain);
+                        GamePlayVparede.setTextContent(""+Vparede);
+                        GamePlayStress.setTextContent(""+Stress);
+
+                        subTagGamePlayConfig.appendChild(GamePlayNBullets);
+                        subTagGamePlayConfig.appendChild(GamePlayBulletSpeed);
+                        subTagGamePlayConfig.appendChild(GamePlayRcontain);
+                        subTagGamePlayConfig.appendChild(GamePlayVparede);
+                        subTagGamePlayConfig.appendChild(GamePlayStress);
+
+                    subTagGamePlayConfig.appendChild(subTagGamePlayConfigOther);
+
+                Element subTagMenuConfig = doc.createElement("Config_Menu");
+
+                        Element MenuTmax = doc.createElement("Tmax");
+                        Element MenuNbots = doc.createElement("Nbots");
+                        Element MenuRecover = doc.createElement("Recover");
+                        Element MenuMusicOn = doc.createElement("MusicOn");
+
+                        MenuTmax.setTextContent(""+Tmax);
+                        MenuNbots.setTextContent(""+Nbots);
+                        MenuRecover.setTextContent(""+recover);
+                        MenuMusicOn.setTextContent(""+MusicOn);
+
+                        subTagMenuConfig.appendChild(MenuTmax);
+                        subTagMenuConfig.appendChild(MenuNbots);
+                        subTagMenuConfig.appendChild(MenuRecover);
+                        subTagMenuConfig.appendChild(MenuMusicOn);
+
+                tagConfig.appendChild(subTagWindowConfig);
+                tagConfig.appendChild(subTagImagensConfig);
+                tagConfig.appendChild(subTagGamePlayConfig);
+                tagConfig.appendChild(subTagMenuConfig);
+
+            doc.appendChild(tagConfig);
+
+            String arquivo = converter(doc);
+            salvarArquivo(arquivo);
+        }
+
+        public static String getChildTagValue(Element elem, String tagName) throws Exception {
+            NodeList children = elem.getElementsByTagName(tagName);
+            String result = null;
+            if (children == null)
+                return result;
+            Element child = (Element) children.item(0);
+            if (child == null) 
+                return result;
+            result = child.getTextContent();
             return result;
-        Element child = (Element) children.item(0);
-        if (child == null) 
-            return result;
-        result = child.getTextContent();
-        return result;
-    }
+        }
     
     private static void lerXml() throws Exception, SAXException, TransformerException 
     {

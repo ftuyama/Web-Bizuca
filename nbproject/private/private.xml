@@ -2,13 +2,8 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/C:/Users/Felipe/Documents/NetBeansProjects/CS/src/code/Fase.java</file>
-            <file>file:/C:/Users/Felipe/Documents/NetBeansProjects/CS/src/code/Musica.java</file>
-            <file>file:/C:/Users/Felipe/Documents/NetBeansProjects/CS/src/code/Figura.java</file>
-            <file>file:/C:/Users/Felipe/Documents/NetBeansProjects/CS/src/code/Bizuca.java</file>
-            <file>file:/C:/Users/Felipe/Documents/NetBeansProjects/CS/src/code/Config.java</file>
-            <file>file:/C:/Users/Felipe/Documents/NetBeansProjects/CS/src/code/Game.java</file>
-        </group>
+        <group name="Testes"/>
+        <group name="Projetos"/>
+        <group/>
     </open-files>
 </project-private>

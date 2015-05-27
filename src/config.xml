@@ -43,7 +43,7 @@
 </Config_Gameplay>
 <Config_Menu>
 <Tmax>1280</Tmax>
-<Nbots>1</Nbots>
+<Nbots>5</Nbots>
 <Recover>1</Recover>
 <MusicOn>true</MusicOn>
 </Config_Menu>
