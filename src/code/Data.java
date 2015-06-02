@@ -1,7 +1,7 @@
 package code;
 import java.sql.*;
 
-public class BancoDados 
+public class Data 
 {
     final String DRIVER = "com.mysql.jdbc.Driver";
     final String URL = "jdbc:mysql://localhost:3306/players";

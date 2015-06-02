@@ -7,9 +7,13 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.*;
+import java.util.*;
 
 public class Config 
 {
+    ArrayList<User> Users = new ArrayList();
+    public int defaultPort = 80;
+    
     private static Config instance;
     public static Config getInstance(){
         if (instance == null) instance = new Config();

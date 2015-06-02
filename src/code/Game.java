@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 public class Game extends JPanel
 {
     Config cfg = Config.getInstance();
-    BancoDados BDados = new BancoDados();
+    Data BDados = new Data();
     
     private JButton jplay, jexit, jteste, jreset;
     private JTextField jtempo, jmusica, jbots, jsaude;
