@@ -12,7 +12,7 @@ import java.util.*;
 public class Config 
 {
     ArrayList<User> Users = new ArrayList();
-    public int defaultPort = 80;
+    public int defaultPort = 81;
     
     private static Config instance;
     public static Config getInstance(){
@@ -20,26 +20,23 @@ public class Config
         return instance;
     }
     public String title = "Web Bizuca";
-    public int HTela = 1280, VTela = 720;
+    public int HTela = 960, VTela = 680;
     
     String Imagedir_ = "src\\imagens\\";
     String bot_ = Imagedir_+"bot.png";
     String bala_ = Imagedir_+"bala.png";
     String tiro_ = Imagedir_+"tiro.png";
-    String VO_ = Imagedir_+"victory.mid";
-    String GO_ = Imagedir_+"gameover.mid";
     String intro_ = Imagedir_+"intro.png";
-    String musica_ = Imagedir_+"musica.mid";
+    String status_ = Imagedir_+"status.png";
     String player_ = Imagedir_+"player.png";
-    String vitoria_ = Imagedir_+"vitoria.png";
-    String gameover_ = Imagedir_+"gameover.png";
     String fasedesign_ = Imagedir_+"fasedesign.png";
     
-    public int PlayerHP = 100, BotHP = 100, SleepTime = 5, EventTime = 50;
+    public int PlayerHP = 100, BotHP = 100, SleepTime = 1, EventTime = 50;
     public int PlayerXinic = 350, PlayerYinic = 350;
-    public int PlayerSpeed = 7, BotSpeed = 1, BulletSpeed = 3;
+    public int PlayerSpeed = 7, BotSpeed = 1, BulletSpeed = 15;
     public int NBullets = 10, Rcontain = 3, Trecharge = 100;
     public float Vparede = (float) 1.5, Vbot = 10, Vplayer = 7, Stress = 100;
+    public int Scale = 25;
     
     public int Tmax = 1280, Nbots = 5, recover = 1;
     boolean MusicOn = false;
@@ -109,30 +106,21 @@ public class Config
                     Element ImagemBala = doc.createElement("bala_");
                     Element ImagemTiro = doc.createElement("tiro_");
                     Element ImagemIntro = doc.createElement("intro_");
-                    Element ImagemMusica = doc.createElement("musica_");
                     Element ImagemPlayer = doc.createElement("player_");
-                    Element ImagemVitoria = doc.createElement("vitoria_");
-                    Element ImagemGameOver = doc.createElement("gameover_");
                     Element ImagemFaseDesign = doc.createElement("fasedesign_");
 
                     ImagemBot.setTextContent(bot_);
                     ImagemBala.setTextContent(bala_);
                     ImagemTiro.setTextContent(tiro_);
                     ImagemIntro.setTextContent(intro_);
-                    ImagemMusica.setTextContent(musica_);
                     ImagemPlayer.setTextContent(player_);
-                    ImagemVitoria.setTextContent(vitoria_);
-                    ImagemGameOver.setTextContent(gameover_);
                     ImagemFaseDesign.setTextContent(fasedesign_);
 
                     subTagImagensConfig.appendChild(ImagemBot);
                     subTagImagensConfig.appendChild(ImagemBala);
                     subTagImagensConfig.appendChild(ImagemTiro);
                     subTagImagensConfig.appendChild(ImagemIntro);
-                    subTagImagensConfig.appendChild(ImagemMusica);
                     subTagImagensConfig.appendChild(ImagemPlayer);
-                    subTagImagensConfig.appendChild(ImagemVitoria);
-                    subTagImagensConfig.appendChild(ImagemGameOver);
                     subTagImagensConfig.appendChild(ImagemFaseDesign);
 
 
@@ -279,10 +267,7 @@ public class Config
         instance.bala_ = getChildTagValue(endElement,"bala_");
         instance.tiro_ = getChildTagValue(endElement,"tiro_");
         instance.intro_ = getChildTagValue(endElement, "intro_");
-        instance.musica_ = getChildTagValue(endElement,"musica_");
         instance.player_ = getChildTagValue(endElement,"player_");
-        instance.vitoria_ = getChildTagValue(endElement,"vitoria_");
-        instance.gameover_ = getChildTagValue(endElement,"gameover_");
         instance.fasedesign_ = getChildTagValue(endElement,"fasedesign_");
         
         

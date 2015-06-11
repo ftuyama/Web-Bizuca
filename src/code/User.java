@@ -8,8 +8,10 @@ public class User
 {
     int port;
     String IP, nick, pass, message;
+    boolean interpreted = false;
     boolean broadCast = false;
     boolean received = false;
+    boolean started = false;
     boolean sent = false;
     ServerSocket servidor;
     Socket cliente;
@@ -32,6 +34,9 @@ public class User
     
     public void chatListen() {
         new Thread(new Receive("chat")).start();
+    }
+    public void Listen() {
+        new Thread(new Receive("jogo")).start();
     }
     public void Send(String msg) {
         new Thread(new Send(msg)).start();
@@ -59,14 +64,16 @@ public class User
         
         @Override
         public void run() {
-            received = broadCast = false;
+            interpreted = received = broadCast = false;
             while (!received) {
                 try {
                     Scanner entrada = new Scanner(cliente.getInputStream());
                     message = entrada.nextLine();
                     interpret(message);
+                    cliente = null;
+                    while (cliente == null) 
+                        cliente = servidor.accept();
                     received = true;
-                    cliente = servidor.accept();
                 } catch (Exception e) {
                     try {
                         Thread.sleep(50);

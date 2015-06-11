@@ -1,57 +1,122 @@
 package code;
 
 import java.awt.*;
-import java.awt.event.*;
 import javax.swing.*;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Game extends JPanel
 {
     Config cfg = Config.getInstance();
-    Data BDados = new Data();
-    
-    private JButton jplay, jexit, jteste, jreset;
-    private JTextField jtempo, jmusica, jbots, jsaude;
-    private JLabel jtexto1, jtexto2, jtexto3, jtexto4;
-    private JLabel jex1, jex2, jTitle, jCredit, jload;
     
     Random gerador = new Random();
-    boolean Start = false, AllAI = false, VersaoTeste = false;
-    private Thread Jogo, AI;
+    static boolean AllAI = false, AllPlayers = false;
     private ArrayList<Thread> AIvector = new ArrayList<>();
+    private Thread Jogo, AI;
     
     float Sin, Cos, Theta;
     int AbsX, AbsY, Xp, Yp, xVet, yVet;
-    int nbots, distance, tempo = 0;
-    String sucess ="";
+    static int distance, tempo = 0;
     
     Fase fase = new Fase();
-    Musica Music = new Musica();
-    Image intro = new ImageIcon(cfg.intro_).getImage();
-    Image vitoria = new ImageIcon(cfg.vitoria_).getImage();
-    Image gameover = new ImageIcon(cfg.gameover_).getImage();
     Image fasedesign = new ImageIcon(cfg.fasedesign_).getImage();
+    Image status = new ImageIcon(cfg.status_).getImage();
     ArrayList<Figura> Balas = new ArrayList<>();
     ArrayList<Figura> RemBalas = new ArrayList<>();
     ArrayList<Figura> Tiros = new ArrayList<>();
     ArrayList<Figura> RemTiros = new ArrayList<>();
+    ArrayList<Figura> Players = new ArrayList<>();
+    ArrayList<Figura> RemPlayers = new ArrayList<>();
     ArrayList<Figura> Bots = new ArrayList<>();
-    private Figura P1;
 
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXX Inicialização XXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     
-    public Game() 
+    
+    public Game()
     {
-        if(!BDados.conecta()) sucess = "Não";
         setFocusable(true);
         setBounds(0, 0, cfg.HTela, cfg.VTela);
+        removeAll(); validate();
         setLayout(null);
-        init();
-        eventos();
+        Inicializar();
+        initialMap();
+        startGame();
+    }
+    
+    // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    // XXXXXXXXXXXXXX Conectar Jogadores XXXXXXXXXXXXXXXX
+    // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    
+    public void initialMap(){
+        new Thread(new sendMap()).start();
+    }
+    public void exchangeMap() {
+        for (User U : cfg.Users)
+            new Thread(new receiveMap(U)).start();
+        new Thread(new sendMap()).start();
+    }
+    
+    public class sendMap implements Runnable
+    {
+        public void run() 
+        {
+            String message = "@"+Players.size()+","+Bots.size()+","+"0";
+            for (Figura P : Players)
+                message += ","+P.ID+","+P.getX()+","+P.getY()+","+P.HP+","+P.getAng();
+            for (Figura B : Bots)
+                message += ","+B.ID+","+B.getX()+","+B.getY()+","+B.HP+","+B.getAng2();
+            for (Figura T : Tiros)
+                message += ","+"0"+","+T.getX()+","+T.getY()+","+T.HP+","+T.getAng2();
+            for (User W : cfg.Users) {
+                for (Figura P : Players)
+                    if (P.ID == W.port)
+                        message+=","+P.Bullets;
+                message+=",@";
+                W.Send(message);
+            }
+        }
+    }
+    
+    public class receiveMap implements Runnable
+    {
+        User U;
+        receiveMap(User U){
+            this.U = U;
+        }
+        public void run() 
+        {
+            try 
+            {
+                U.Listen();
+                while(!U.received)
+                    Thread.sleep(cfg.SleepTime);
+                interpret(U.message, U.port);
+                U.interpreted = true;
+            } catch (InterruptedException ex) { }
+        }
+    }
+    public void interpret (String message, int id)
+    {
+        String info;
+        int i, ind = 0, it = 0;
+        for (Figura P: Players)
+            if(P.ID == id)
+                ind = Players.indexOf(P);
+        System.out.print("interpreting "+message);
+        
+        for (i = 0; i<message.length(); i++)
+            if (++it <= 3)
+            {
+                info = "";
+                while(message.charAt(i)!=',')
+                    info+=message.charAt(i++);
+                if (it == 1)
+                    Players.get(ind).setAng(Integer.parseInt(info));
+                else if (it == 2) Players.get(ind).Keyboard = info;
+                else Players.get(ind).Mouse = info;
+            }
+        System.out.println(" "+Players.get(ind).Keyboard+" ok!");
     }
     
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -60,126 +125,65 @@ public class Game extends JPanel
     
     public void Inicializar()
     {
-        Start = true;
-        removeAll(); validate();
-        P1 = new Figura(new ImageIcon(cfg.player_).getImage(),
-                    cfg.PlayerXinic, cfg.PlayerYinic,-1, 0, 0, true);
-        for (int n = 0; n<cfg.Nbots; n++) {
-                Xp = gerador.nextInt(fase.HFase); Yp = gerador.nextInt(fase.LFase);
-                float Sin = 2*gerador.nextFloat()-1;
-                Figura novoBot = new Figura(new ImageIcon(cfg.bot_).getImage(),
-                    Xp,Yp, n, Sin, (float)Math.sqrt(1-Sin*Sin), false);
-                while (colisao2(novoBot, Xp/4, Yp/4)){
-                    Xp = gerador.nextInt(fase.HFase); Yp = gerador.nextInt(fase.LFase);
-                    novoBot.setXY(Xp, Yp);
-                }
-                Bots.add(novoBot);
+        for (User U : cfg.Users)
+            U.sent = U.received = false;
+        for (int n = 0; n<cfg.Users.size(); n++)
+        {
+            Xp = gerador.nextInt(fase.HFase);
+            Yp = gerador.nextInt(fase.LFase);
+            Figura P = new Figura(new ImageIcon(cfg.player_).getImage(),
+                    Xp, Yp,cfg.Users.get(n).port, 0, 0, true);
+            while(colisao2(P,Xp/4,Yp/4))  
+            {
+                Xp = gerador.nextInt(fase.HFase);
+                Yp = gerador.nextInt(fase.LFase);
+                P.setXY(Xp, Yp);
             }
+            P.nick = cfg.Users.get(n).nick;
+            Players.add(P);
+        }
+        for (int n = 0; n<cfg.Nbots; n++) 
+        {
+            Xp = gerador.nextInt(fase.HFase);
+            Yp = gerador.nextInt(fase.LFase);
+            float Sin = 2 * gerador.nextFloat() - 1;
+            Figura novoBot = new Figura(new ImageIcon(cfg.bot_).getImage(),
+                    Xp, Yp, n, Sin, (float) Math.sqrt(1 - Sin * Sin), false);
+            while (colisao2(novoBot, Xp / 4, Yp / 4)) {
+                Xp = gerador.nextInt(fase.HFase);
+                Yp = gerador.nextInt(fase.LFase);
+                novoBot.setXY(Xp, Yp);
+            }
+            Bots.add(novoBot);
+        }
+        Balas.clear();
     }
     
-    public void init()
-    {
-        int H = 400, D = 150, V = 150;
-        
-        jload = new JLabel ("MySQL "+sucess+" carregado!"); jload.setBounds(600, 600, 200, 30); add(jload);
-        jtexto1 = new JLabel("Música?"); jtexto1.setBounds(H, V, 200, 30); add(jtexto1);
-        jtexto2 = new JLabel("Nº Bots:"); jtexto2.setBounds(H, V+50, 200, 30); add(jtexto2);
-        jtexto3 = new JLabel("Regenaração?"); jtexto3.setBounds(H, V+100, 200, 30); add(jtexto3);
-        jtexto4 = new JLabel("Tempo máximo:"); jtexto4.setBounds(H, V+150, 200, 30); add(jtexto4);
-        jex1 = new JLabel("(1 = sim) (0 = não)"); jex1.setBounds(H-25, V+15, 200, 30); add(jex1);
-        jex2 = new JLabel("(1 = sim) (0 = não) (-1 = negativa)"); jex2.setBounds(H-50, V+115, 200, 30); add(jex2);
-        
-        jTitle = new JLabel("Bizuca V 2.0"); 
-        jTitle.setFont(new java.awt.Font("Old English Text MT", 0, 36));
-        jTitle.setBounds(cfg.HTela/2-100, 0, 300, 100); add(jTitle);
-        
-        jCredit = new JLabel("By Felipe Tuyama & Uriel"); 
-        jCredit.setFont(new java.awt.Font("Euclid Fraktur", 1, 18));
-        jCredit.setBounds(cfg.HTela/2, 400, 300, 100); add(jCredit);
-        
-        if(cfg.MusicOn) jmusica= new JTextField("0"); else jmusica= new JTextField("1"); 
-        jmusica.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jmusica.setBounds(H+D,V,200,30); add(jmusica);
-        jbots = new JTextField(""+cfg.Nbots); jbots.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jbots.setBounds(H+D,V+50,200,30); add(jbots);
-	jsaude = new JTextField(""+cfg.recover); jsaude.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jsaude.setBounds(H+D,V+100,200,30); add(jsaude);
-        jtempo = new JTextField(""+cfg.Tmax); jtempo.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jtempo.setBounds(H+D,V+150,200,30); add(jtempo);
-        
-        
-	jplay = new JButton ("Play"); jplay.setBounds(cfg.HTela/2, 350, 100, 40); add(jplay);
-	jteste = new JButton ("Versão Teste"); jteste.setBounds(0, 0, 200, 40); add(jteste);
-        jreset = new JButton ("Reset Config"); jreset.setBounds(350, 400, 150, 40); add(jreset);
-	jexit = new JButton ("X"); jexit.setBounds(cfg.HTela-75, 0, 50, 25); add(jexit);
-        
-    }
-    
-    public void eventos(){
-        jplay.addActionListener(new ActionListener(){
-            public void actionPerformed (ActionEvent e) {
-                cfg.MusicOn = (Integer.parseInt(jmusica.getText().toString())==1);
-                nbots = cfg.Nbots = (Integer.parseInt(jbots.getText().toString()));
-                cfg.Tmax = (Integer.parseInt(jtempo.getText().toString()));
-                cfg.recover = (Integer.parseInt(jsaude.getText().toString()));
-                try {
-                    cfg.gerarXml();
-                } catch (Exception ex) {}
-                startGame();
-            }	
-        });	
-        jteste.addActionListener(new ActionListener(){
-            public void actionPerformed (ActionEvent e) {
-                nbots = cfg.Nbots = 5; cfg.recover = 1; cfg.Tmax = cfg.HTela;
-                VersaoTeste = true;
-                startGame();
-            }	
-        });
-        jreset.addActionListener(new ActionListener(){
-            public void actionPerformed (ActionEvent e) {
-                try {
-                    cfg.gerarXml();
-                } catch (Exception ex) {}
-            }	
-        });
-        jexit.addActionListener(new ActionListener(){
-            public void actionPerformed (ActionEvent e) {
-                System.exit(1);
-            }	
-        });
-    }
-
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXX Loop Principal XXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
     public void startGame()
     {
-        Inicializar();
         Jogo = new Thread() 
         {
             public void run() 
             {
-                Music.play();
-                controle();
                 setUpAI();
                 while (GameOn()) 
                 {
+                    System.out.print("Loop");
                     timeEvents();
                     physics();
+                    controle(); 
+                    System.out.print(" Maps");
+                    exchangeMap(); 
+                    System.out.println(" Waiting player");
+                    waitPlayers();
                     repaint();
                     waitAI();
-                    try {
-                        Thread.sleep(cfg.SleepTime);
-                    } catch (InterruptedException ex) {
-                    }
                 }
-                if(nbots>0) Music.GO();
-                else Music.VO();
                 repaint();
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException ex) {}
             }
         };
         Jogo.start();
@@ -187,7 +191,29 @@ public class Game extends JPanel
     
     // Verifica o término do jogo
     public boolean GameOn(){
-        return P1.alive() && tempo<cfg.Tmax && nbots>0;
+        for (Figura P : Players)
+            if (!P.alive())
+                RemPlayers.add(P);
+        for (Figura P : RemPlayers)
+            Players.remove(P);
+        return (Players.size()+Bots.size()>2) && tempo<cfg.Tmax;
+    }
+
+    public void waitPlayers()
+    {
+        AllPlayers = false;
+        while (!AllPlayers)
+        {
+            AllPlayers = true;
+            for (User U : cfg.Users)
+                if (!U.interpreted || !U.sent)
+                    AllPlayers = false;
+            try {
+                Thread.sleep(cfg.SleepTime);
+            } catch (InterruptedException ex) {}
+        }
+        for (User U : cfg.Users)
+            U.received = U.interpreted = U.sent = false;
     }
         
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -233,7 +259,6 @@ public class Game extends JPanel
                     }
                     Bots.remove(bot);
                     tempo-=100;
-                    nbots--;
                 }
             });
         for (Thread AIbot: AIvector)
@@ -270,7 +295,9 @@ public class Game extends JPanel
             if (distance>1 && distance<bot.Rparede)
                  if (!fase.fase[xVet/4][yVet/4] ) {
                      bot.parede = true; bot.dparede = distance; }
-            if (P1.contains(xVet, yVet)) bot.atirou = true; 
+            for (Figura P : Players)
+                if (P.contains(xVet, yVet))
+                    bot.atirou = true; 
             if(bot.atirou||bot.parede) break;
         }
         bot.xVet = xVet; bot.yVet = yVet;
@@ -326,7 +353,8 @@ public class Game extends JPanel
                 novaBala.setXY(Xp, Yp);
             }
             Balas.add(novaBala);
-            P1.HP+=cfg.recover*(100-P1.HP)/20;
+            for (Figura P : Players)
+                P.HP+=cfg.recover*(100-P.HP)/20;
             tempo++;
         }
     }
@@ -344,22 +372,24 @@ public class Game extends JPanel
                 Tiros.add(novoTiro);
                 bot.toAdd = false;
             }
-        if (P1.toAdd)
-        {
-            Figura novoTiro = new Figura();
-            novoTiro = P1.vBullet;
-            Tiros.add(novoTiro);
-            P1.toAdd = false;
-        }
+        for (Figura P : Players)
+            if (P.toAdd)
+            {
+                Figura novoTiro = new Figura();
+                novoTiro = P.vBullet;
+                Tiros.add(novoTiro);
+                P.toAdd = false;
+            }
         if (!Tiros.isEmpty())
         {
             for (Figura T : Tiros)
             {
                 if (!T.friendly)
-                    if (colisaoFig(T, P1, T.Cos, T.Sin)){
-                        P1.dano(20+gerador.nextInt(20)); 
-                        RemTiros.add(T);
-                     }
+                    for (Figura P : Players)
+                        if (colisaoFig(T, P, T.Cos, T.Sin)){
+                            P.dano(20+gerador.nextInt(20)); 
+                            RemTiros.add(T);
+                         }
                 if (T.friendly && !RemTiros.contains(T))
                     for (Figura Bot : Bots) 
                         if (!RemTiros.contains(T))
@@ -382,13 +412,14 @@ public class Game extends JPanel
         {
             for (Figura candy: Balas)
             {
-                if (colisaoFig(P1, candy, 0, 0)) {
-                    tempo-=10; P1.Bullets+=5; RemBalas.add(candy);
-                }
+                for (Figura P : Players)
+                    if (colisaoFig(P, candy, 0, 0)) {
+                        tempo-=10; P.Bullets+=5; RemBalas.add(candy);
+                    }
                 for (Figura Bot : Bots) 
                     if (!RemBalas.contains(candy))
                         if (colisaoFig(Bot, candy, 0, 0)) {
-                            P1.Bullets+=5; RemBalas.add(candy);
+                            Bot.Bullets+=5; RemBalas.add(candy);
                 }
             }
             if (!RemBalas.isEmpty()) {
@@ -440,138 +471,93 @@ public class Game extends JPanel
         return (distance(Xs,Ys,X2,Y2) < (aux1.Radius + aux2.Radius));
     }
     
+     public int distance(int Xa, int Ya, int Xb, int Yb){
+        return (int)Math.sqrt((Xa-Xb)*(Xa-Xb)+(Ya-Yb)*(Ya-Yb));
+    }
+    public float distance(float Xa, float Ya, float Xb, float Yb){
+        return (float)Math.sqrt((Xa-Xb)*(Xa-Xb)+(Ya-Yb)*(Ya-Yb));
+    }
+    
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXX Métodos de Desenho XXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     
     public void paintComponent(Graphics g)
     {
-        if(Start)
-        {
             if(GameOn())
             {
                 super.paintComponent(g);
-                AbsX = cfg.HTela/2-P1.getX();  AbsY = cfg.VTela/2-P1.getY();
-                g.drawImage(fasedesign,AbsX, AbsY,this);
-                g.setColor(Color.black); g.fillRect(0, 0, cfg.HTela, 40); g.fillRect(0, 0, 70, 60);
+                AbsX = 150; AbsY = 50;
+                
+                g.setColor(Color.black); g.fillRect(0, 0, cfg.HTela, cfg.VTela);
                 g.setColor(Color.red);   g.fillRect(5, 5, (tempo++)*cfg.HTela/cfg.Tmax, 30);
-                g.setColor(Color.black); g.drawString("  "+tempo+"/"+cfg.HTela, 10, 30);
-                g.setColor(Color.red);   g.drawString("Faltam: "+nbots, 10, 50);
+                g.setColor(Color.black); g.drawString("Tempo Restante", 10, 17); 
+                                         g.drawString("  "+tempo+"/"+cfg.HTela, 10, 32);
+                g.setColor(Color.red);   g.drawString("Players: "+Players.size(), 10, 70);
+                                         g.drawString("Bots: "+Bots.size(), 10, 50);
+                g.drawImage(fasedesign,AbsX, AbsY,this);
 
-                if (P1.alive())
-                {
-                    Xp = cfg.HTela/2-P1.Width/2; Yp = cfg.VTela/2-P1.Height/2;
-                    if(VersaoTeste)
-                        g.drawOval(Xp-P1.Rvisao/2, Yp-P1.Rvisao/2,P1.Rvisao,P1.Rvisao);
-                    g.setColor(Color.red);   g.drawString("HP:"+P1.HP, Xp-25, Yp-30);
-                    g.setColor(Color.blue);  g.drawString("B:"+P1.Bullets, Xp+25, Yp-30);
-                    g.drawImage(P1.getImagemPlayer(),Xp, Yp, this);
-                    g.setColor(Color.black); g.fillRect(Xp-4, Yp-24, P1.HP/2+8, 18);
-                    g.setColor(Color.red);   g.fillRect(Xp, Yp-20, P1.HP/2, 10);
-                }
                 if(!Balas.isEmpty())
                     for (int i = 0; i<Balas.size(); i++)
-                        g.drawImage(Balas.get(i).getImagemBot(), AbsX+Balas.get(i).getX(), 
-                                AbsY+Balas.get(i).getY(), this);
+                        g.drawImage(Balas.get(i).getImagemBot(), AbsX+Balas.get(i).getX()/3, 
+                                AbsY+Balas.get(i).getY()/3, this);
                 if(!Tiros.isEmpty())
                     for (int i = 0; i<Tiros.size(); i++)
-                        g.drawImage(Tiros.get(i).getImagemBot(), AbsX+Tiros.get(i).getX(), 
-                                AbsY+Tiros.get(i).getY(), this);
-                for (int i = 0; i<Bots.size(); i++)
-                    if (Bots.get(i).alive())
+                        g.drawImage(Tiros.get(i).getImagemBot(), AbsX+Tiros.get(i).getX()/3, 
+                                AbsY+Tiros.get(i).getY()/3, this);
+                if(!Players.isEmpty())
+                    for (int i = 0; i<Players.size(); i++)
                     {
-                        Figura B = Bots.get(i);
-                        Xp = AbsX+B.getX(); Yp = AbsY+B.getY();
+                        Figura P = Players.get(i);
+                        Xp = AbsX+P.getX()/3; Yp = AbsY+P.getY()/3;
 
-                        if(VersaoTeste)
-                        {
-                            g.setColor(Color.MAGENTA); g.drawLine(Xp, Yp, B.xVet, B.yVet);
-                            g.setColor(Color.blue); 
-                            g.drawOval(Xp-B.Rvisao/2,Yp-B.Rvisao/2,B.Rvisao,B.Rvisao);
-                            if(B.atirou) g.drawString("atirou",Xp+30,Yp-30);
-                            g.setColor(Color.red); 
-                            if(B.parede) g.drawString("parede",Xp-30,Yp-30);
-                            if(B.parede) g.drawString(""+B.dparede,Xp-30,Yp+30);
-                            g.drawString(""+B.change,Xp-30,Yp+60);
-                            g.drawOval(Xp-B.Rparede/2,Yp-B.Rparede/2,B.Rparede,B.Rparede);
-                        }
-
-                        g.setColor(Color.red);   g.drawString("HP:"+B.HP, Xp-25, Yp-60);
-                        g.setColor(Color.blue);  g.drawString("B:"+B.Bullets, Xp+25, Yp-60);
-                        g.setColor(Color.black); g.fillRect(Xp-20, Yp-60, B.HP/2+8, 18);
-                        g.setColor(Color.green); g.fillRect(Xp-16, Yp-55, B.HP/2, 10);
-
-                        g.drawImage(B.getImagemBot(),AbsX+B.getXc(), AbsY+B.getYc(), this);
-
+                            g.drawImage(status,AbsX+P.getXc()/3-20, AbsY+P.getYc()/3-40, this);
+                            g.setColor(Color.red);   g.drawString(P.nick, Xp, Yp-30);
+                            g.setColor(Color.blue);  g.drawString(""+P.Bullets, Xp+45, Yp-20);
+                            g.setColor(Color.green); g.fillRect(Xp-3, Yp-27, P.HP/3, 6);
+                        g.drawImage(Players.get(i).getImagemPlayer(), AbsX+Players.get(i).getX()/3, 
+                                AbsY+Players.get(i).getY()/3, this);
                     }
-            }
-            else if (nbots>0) g.drawImage(gameover,0,0,this);
-            else g.drawImage(vitoria,0,0,this);
-        }
-        else {
-            super.paintComponent(g);
-            g.drawImage(intro,0,0,this);
-        }
-    }
+                if (!Bots.isEmpty())
+                    for (int i = 0; i<Bots.size(); i++)
+                        if (Bots.get(i).alive())
+                        {
+                            Figura B = Bots.get(i);
+                            Xp = AbsX+B.getX()/3; Yp = AbsY+B.getY()/3;
 
+                            g.drawImage(status,AbsX+B.getXc()/3-20, AbsY+B.getYc()/3-40, this);
+                            g.setColor(Color.red);   g.drawString("Bot "+B.ID, Xp-5, Yp-33);
+                            g.setColor(Color.blue);  g.drawString(""+B.Bullets, Xp+40, Yp-23);
+                            g.setColor(Color.green); g.fillRect(Xp-6, Yp-30, B.HP/3, 6);
+                            
+                            g.drawImage(B.getImagemBot(),AbsX+B.getXc()/3, AbsY+B.getYc()/3, this);
+
+                        }
+            }
+    }
+    
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXX Métodos de Controle XXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     
-    public void CalculaSinCos()
-    {
-        float ax = P1.ax, ay = P1.ay;
-        float Hip = distance(ax,ay,cfg.HTela/2, cfg.VTela/2);
-        Sin = (ay-cfg.VTela/2)/Hip; Cos = (ax-cfg.HTela/2)/Hip;
-    }
-    
     public void controle() 
     {
-        // XXXXXXXXXXXXXXXXXXX Controle do Mouse XXXXXXXXXXXXXXXXXXXXX
-        
-        addMouseListener(new MouseListener() {  
-            public void mouseClicked(MouseEvent e) {  
-                if (P1.atirar()) {
-                    CalculaSinCos();
-                    P1.vBullet = new Figura(new ImageIcon(cfg.tiro_).getImage(), 
-                            P1.getX(), P1.getY(), Sin, Cos, true);
-                }
-            }  
-            public void mousePressed(MouseEvent e) { }  
-            public void mouseReleased(MouseEvent e) { }  
-            public void mouseEntered(MouseEvent e) { }  
-            public void mouseExited(MouseEvent e) { }  
-        });  
-        addMouseMotionListener(new MouseMotionListener() {
-            public void mouseDragged(MouseEvent e) { }
-            public void mouseMoved(MouseEvent e) {
-                P1.ax = e.getX(); P1.ay = e.getY();
+        for (Figura P : Players)
+        {
+            Sin = (float) Math.sin(P.getAng()*Math.PI/180); 
+            Cos = (float) Math.cos(P.getAng()*Math.PI/180); 
+            if (P.Keyboard.equals("W"))       mover(P, Cos, Sin);
+            else if (P.Keyboard.equals("S"))  mover(P, -Cos, -Sin);
+            else if (P.Keyboard.equals("A"))  mover(P, Cos, -Sin);
+            else if (P.Keyboard.equals("D"))  mover(P, -Cos, Sin);
+            if (P.Mouse.equals("1"))
+            {
+                System.out.println("click");
+                if (P.atirar())
+                    P.vBullet = new Figura(new ImageIcon(cfg.tiro_).getImage(), 
+                                P.getX(), P.getY(), Sin, Cos, true);
             }
-        });
-        
-         // XXXXXXXXXXXXXXXXXXX Controle das Teclas XXXXXXXXXXXXXXXXXXXXX
-        
-        addKeyListener(new KeyListener() {
-            public void keyTyped(KeyEvent e) { }
-            public void keyPressed(KeyEvent e) {
-                int Key = e.getKeyCode();
-                CalculaSinCos();
-                if (Key == 38 || Key == 87) mover(P1, Cos, Sin);
-                if (Key == 40 || Key == 83) mover(P1,-Cos, -Sin);
-                if (Key == 37 || Key == 68) mover(P1, -Cos, Sin);
-                if (Key == 39 || Key == 65) mover(P1, Cos, -Sin);
-                if (Key == 27) System.exit(0);
-            }
-            public void keyReleased(KeyEvent e) {
-                //System.out.println(e.getKeyCode());
-            }
-        });
+        }
     }
-
-    public int distance(int Xa, int Ya, int Xb, int Yb){
-        return (int)Math.sqrt((Xa-Xb)*(Xa-Xb)+(Ya-Yb)*(Ya-Yb));
-    }
-    public float distance(float Xa, float Ya, float Xb, float Yb){
-        return (float)Math.sqrt((Xa-Xb)*(Xa-Xb)+(Ya-Yb)*(Ya-Yb));
-    }
+    
 }

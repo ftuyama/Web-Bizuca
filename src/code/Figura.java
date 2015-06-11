@@ -12,8 +12,10 @@ public class Figura
     public boolean parede, atirou, olhou, move;
     public boolean moved, toAdd, friendly;
     
+    String nick;
     public Image imagem;
-    private int x, y;
+    public String Keyboard, Mouse;
+    private int x, y, Ang;
     public int ax, ay, AbsX, AbsY, xVet, yVet;
     public float Sin, Cos, Speed;
     public int Width, Height, Radius;
@@ -29,8 +31,11 @@ public class Figura
     
     public int getX () { return x; }
     public int getY () { return y; }
+    public int getAng2 () { return (int) ((180/Math.PI)*Math.atan2(Sin, Cos)); }
+    public int getAng () { return Ang; }
     public int getXc (){ return x - Width/2;}
     public int getYc (){ return y - Height/2;}
+    public void setAng (int Ang) { this.Ang = Ang; }
     public void setXY (int X, int Y) { x = X; y = Y; }
     public void move (float Cos, float Sin){ 
         x = (int) (x + Speed*Cos); y = (int) (y + Speed*Sin); }
@@ -64,13 +69,14 @@ public class Figura
     Figura (){ }
     
     Figura (Image Im, int X, int Y){
-        setImagem(Im);  x = X; y = Y; setUp();
+        setImagem(Im);  x = X; y = Y; Ang = 0; setUp();
     }
     
     Figura (Image Im, int X, int Y, int ID, float Sin, float Cos, boolean F)
     {
-        setImagem(Im); x = X; y = Y; setUp();
+        setImagem(Im); x = X; y = Y; Ang = 0; setUp();
         this.ID = ID; Bullets = cfg.NBullets;
+        this.Keyboard = "_"; this.Mouse = "0";
         this.Sin = Sin; this.Cos = Cos;
         this.olhar = new ArrayList<>();
         vBullet = new Figura(); 
@@ -87,7 +93,7 @@ public class Figura
         }
     }
     Figura (Image Im, int X, int Y, float Sin, float Cos, boolean F){
-        setImagem(Im); x = X; y = Y; setUp();
+        setImagem(Im); x = X; y = Y; Ang = 0; setUp();
         friendly = F; Speed = cfg.BulletSpeed;
         this.Sin = Sin; this.Cos = Cos;
     }
@@ -113,15 +119,15 @@ public class Figura
 
     public Image getImagemPlayer () { 
         float angulo = (float) Math.atan2(ay-cfg.VTela/2, ax-cfg.HTela/2);
-        return (Image)rotateImage(toBufferedImage(imagem), angulo*180/Math.PI); 
+        return (Image)rotateImage(toBufferedImage(imagem), angulo*180/Math.PI).getScaledInstance(cfg.Scale, cfg.Scale, 100); 
     }
     public Image getImagemBot () { 
         float angulo = (float) Math.atan2(Sin,Cos);
-        return (Image)rotateImage(toBufferedImage(imagem), angulo*180/Math.PI); 
+        return (Image)rotateImage(toBufferedImage(imagem), angulo*180/Math.PI).getScaledInstance(cfg.Scale, cfg.Scale, 100);  
     }
     public Image getImagem () { 
         float angulo = (float) Math.atan2(ay-y, ax-x);
-        return (Image)rotateImage(toBufferedImage(imagem), angulo*180/Math.PI); 
+        return (Image)rotateImage(toBufferedImage(imagem), angulo*180/Math.PI).getScaledInstance(cfg.Scale, cfg.Scale, 100);  
     }
     public void setImagem (Image imagem) { this.imagem = imagem; }
     

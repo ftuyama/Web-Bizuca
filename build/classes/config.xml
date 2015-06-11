@@ -2,15 +2,14 @@
 <Config>
 <Config_Window>
 <Title>Web Bizuca</Title>
-<Window_Width>1280</Window_Width>
-<Window_Height>720</Window_Height>
+<Window_Width>960</Window_Width>
+<Window_Height>680</Window_Height>
 </Config_Window>
 <Config_Imagens>
 <bot_>src\imagens\bot.png</bot_>
 <bala_>src\imagens\bala.png</bala_>
 <tiro_>src\imagens\tiro.png</tiro_>
 <intro_>src\imagens\intro.png</intro_>
-<musica_>src\imagens\musica.mid</musica_>
 <player_>src\imagens\player.png</player_>
 <vitoria_>src\imagens\vitoria.png</vitoria_>
 <gameover_>src\imagens\gameover.png</gameover_>
@@ -45,6 +44,6 @@
 <Tmax>1280</Tmax>
 <Nbots>5</Nbots>
 <Recover>1</Recover>
-<MusicOn>true</MusicOn>
+<MusicOn>false</MusicOn>
 </Config_Menu>
 </Config>
