@@ -11,8 +11,6 @@
 <tiro_>src\imagens\tiro.png</tiro_>
 <intro_>src\imagens\intro.png</intro_>
 <player_>src\imagens\player.png</player_>
-<vitoria_>src\imagens\vitoria.png</vitoria_>
-<gameover_>src\imagens\gameover.png</gameover_>
 <fasedesign_>src\imagens\fasedesign.png</fasedesign_>
 </Config_Imagens>
 <Config_Gameplay>
@@ -34,7 +32,7 @@
 <Trecharge>100</Trecharge>
 </Config_Gameplay_Time>
 <NBullets>10</NBullets>
-<BulletSpeed>3</BulletSpeed>
+<BulletSpeed>15</BulletSpeed>
 <Rcontain>3</Rcontain>
 <Vparede>1.5</Vparede>
 <Stress>100.0</Stress>

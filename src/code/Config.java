@@ -39,7 +39,7 @@ public class Config
     public int Scale = 25;
     
     public int Tmax = 1280, Nbots = 5, recover = 1;
-    boolean MusicOn = false;
+    boolean MusicOn = false, Apocalipse = false;
     
     /*-----------------------------------------------------------------------*/
  

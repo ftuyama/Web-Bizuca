@@ -20,6 +20,7 @@ public class Figura
     public float Sin, Cos, Speed;
     public int Width, Height, Radius;
     int [][] vertices = new int[5][2];
+    static int Nbalas = 0;
     
     ArrayList<Point> olhar;
     
@@ -93,7 +94,8 @@ public class Figura
         }
     }
     Figura (Image Im, int X, int Y, float Sin, float Cos, boolean F){
-        setImagem(Im); x = X; y = Y; Ang = 0; setUp();
+        this.ID = Nbalas%100; Nbalas++;
+        setImagem(Im); x = X; y = Y; Ang = 0; setUp(); 
         friendly = F; Speed = cfg.BulletSpeed;
         this.Sin = Sin; this.Cos = Cos;
     }

@@ -8,6 +8,7 @@ public class Game extends JPanel
 {
     Config cfg = Config.getInstance();
     
+    Genesis G = new Genesis();
     Random gerador = new Random();
     static boolean AllAI = false, AllPlayers = false;
     private ArrayList<Thread> AIvector = new ArrayList<>();
@@ -15,7 +16,7 @@ public class Game extends JPanel
     
     float Sin, Cos, Theta;
     int AbsX, AbsY, Xp, Yp, xVet, yVet;
-    static int distance, tempo = 0;
+    static int distance, Nt = 0, tempo = 0;
     
     Fase fase = new Fase();
     Image fasedesign = new ImageIcon(cfg.fasedesign_).getImage();
@@ -45,6 +46,69 @@ public class Game extends JPanel
     }
     
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    // XXXXXXXXXXXXXXXX Loop Principal XXXXXXXXXXXXXXXXXX
+    // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+    public void startGame()
+    {
+        Jogo = new Thread() 
+        {
+            public void run() 
+            {
+                setUpAI();
+                while (GameOn()) 
+                {
+                    timeEvents();
+                    physics();
+                    controle(); 
+                    exchangeMap();
+                    waitPlayers();
+                    repaint();
+                    waitAI();
+                }
+                repaint();
+            }
+        };
+        Jogo.start();
+    }
+    
+    // Verifica o término do jogo
+    public boolean GameOn(){
+        for (Figura P : Players)
+            if (!P.alive())
+                RemPlayers.add(P);
+        for (Figura P : RemPlayers)
+        {
+            for (User W : cfg.Users)
+                if (P.ID == W.port)
+                    sendShutDown(W,"0");
+            Players.remove(P);
+        }
+        if (Players.size() == 1 && Bots.size() == 0)
+            for (User W : cfg.Users)
+                if (Players.get(0).ID == W.port)
+                    sendShutDown(W,"1");
+        return (Players.size()+Bots.size()>1);
+    }
+
+    public void waitPlayers()
+    {
+        AllPlayers = false;
+        while (!AllPlayers)
+        {
+            AllPlayers = true;
+            for (User U : cfg.Users)
+                if (!U.interpreted || !U.sent)
+                    AllPlayers = false;
+            try {
+                Thread.sleep(cfg.SleepTime);
+            } catch (InterruptedException ex) {}
+        }
+        for (User U : cfg.Users)
+            U.received = U.interpreted = U.sent = false;
+    }
+    
+    // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXX Conectar Jogadores XXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     
@@ -56,18 +120,21 @@ public class Game extends JPanel
             new Thread(new receiveMap(U)).start();
         new Thread(new sendMap()).start();
     }
+    public void sendShutDown(User U, String victory) {
+        U.Send("@ShutDown"+victory);
+    }
     
     public class sendMap implements Runnable
     {
         public void run() 
         {
-            String message = "@"+Players.size()+","+Bots.size()+","+"0";
+            String message = "@"+Players.size()+","+Bots.size()+","+Tiros.size();
             for (Figura P : Players)
                 message += ","+P.ID+","+P.getX()+","+P.getY()+","+P.HP+","+P.getAng();
             for (Figura B : Bots)
                 message += ","+B.ID+","+B.getX()+","+B.getY()+","+B.HP+","+B.getAng2();
             for (Figura T : Tiros)
-                message += ","+"0"+","+T.getX()+","+T.getY()+","+T.HP+","+T.getAng2();
+                message += ","+T.ID+","+T.getX()+","+T.getY()+","+T.HP+","+T.getAng2();
             for (User W : cfg.Users) {
                 for (Figura P : Players)
                     if (P.ID == W.port)
@@ -99,123 +166,75 @@ public class Game extends JPanel
     public void interpret (String message, int id)
     {
         String info;
-        int i, ind = 0, it = 0;
+        int i, ind = -1, it = 0;
         for (Figura P: Players)
             if(P.ID == id)
                 ind = Players.indexOf(P);
-        System.out.print("interpreting "+message);
         
-        for (i = 0; i<message.length(); i++)
-            if (++it <= 3)
-            {
-                info = "";
-                while(message.charAt(i)!=',')
-                    info+=message.charAt(i++);
-                if (it == 1)
-                    Players.get(ind).setAng(Integer.parseInt(info));
-                else if (it == 2) Players.get(ind).Keyboard = info;
-                else Players.get(ind).Mouse = info;
-            }
-        System.out.println(" "+Players.get(ind).Keyboard+" ok!");
+        if (ind != -1)
+            for (i = 0; i<message.length(); i++)
+                if (++it <= 3)
+                {
+                    info = "";
+                    while(message.charAt(i)!=',')
+                        info+=message.charAt(i++);
+                    if (it == 1)
+                        Players.get(ind).setAng(Integer.parseInt(info));
+                    else if (it == 2) Players.get(ind).Keyboard = info;
+                    else Players.get(ind).Mouse = info;
+                }
     }
     
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXXXXXX Menu XXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     
+    public void addPlayer(int n)
+    {
+        Xp = gerador.nextInt(fase.HFase);
+        Yp = gerador.nextInt(fase.LFase);
+        Figura P = new Figura(new ImageIcon(cfg.player_).getImage(),
+                Xp, Yp, cfg.Users.get(n).port, 0, 0, true);
+        while (colisao2(P, Xp / 4, Yp / 4)) {
+            Xp = gerador.nextInt(fase.HFase);
+            Yp = gerador.nextInt(fase.LFase);
+            P.setXY(Xp, Yp);
+        }
+        P.nick = cfg.Users.get(n).nick;
+        G.Generate(P, cfg.Users.get(n));
+        Players.add(P);
+    }
+    
+    public void addBot(int n, boolean setUp)
+    {
+        Xp = gerador.nextInt(fase.HFase);
+        Yp = gerador.nextInt(fase.LFase);
+        float Sin = 2 * gerador.nextFloat() - 1;
+        Figura novoBot = new Figura(new ImageIcon(cfg.bot_).getImage(),
+                Xp, Yp, n, Sin, (float) Math.sqrt(1 - Sin * Sin), false);
+        while (colisao2(novoBot, Xp / 4, Yp / 4)) {
+            Xp = gerador.nextInt(fase.HFase);
+            Yp = gerador.nextInt(fase.LFase);
+            novoBot.setXY(Xp, Yp);
+        }
+        G.Enforce(novoBot, cfg.Users.size());
+        Bots.add(novoBot);
+        if(setUp) setUpSingleBot(novoBot);
+    } 
+            
+            
     public void Inicializar()
     {
         for (User U : cfg.Users)
             U.sent = U.received = false;
         for (int n = 0; n<cfg.Users.size(); n++)
-        {
-            Xp = gerador.nextInt(fase.HFase);
-            Yp = gerador.nextInt(fase.LFase);
-            Figura P = new Figura(new ImageIcon(cfg.player_).getImage(),
-                    Xp, Yp,cfg.Users.get(n).port, 0, 0, true);
-            while(colisao2(P,Xp/4,Yp/4))  
-            {
-                Xp = gerador.nextInt(fase.HFase);
-                Yp = gerador.nextInt(fase.LFase);
-                P.setXY(Xp, Yp);
-            }
-            P.nick = cfg.Users.get(n).nick;
-            Players.add(P);
-        }
-        for (int n = 0; n<cfg.Nbots; n++) 
-        {
-            Xp = gerador.nextInt(fase.HFase);
-            Yp = gerador.nextInt(fase.LFase);
-            float Sin = 2 * gerador.nextFloat() - 1;
-            Figura novoBot = new Figura(new ImageIcon(cfg.bot_).getImage(),
-                    Xp, Yp, n, Sin, (float) Math.sqrt(1 - Sin * Sin), false);
-            while (colisao2(novoBot, Xp / 4, Yp / 4)) {
-                Xp = gerador.nextInt(fase.HFase);
-                Yp = gerador.nextInt(fase.LFase);
-                novoBot.setXY(Xp, Yp);
-            }
-            Bots.add(novoBot);
-        }
+            addPlayer(n);
+        for (int n = 0; n<cfg.Nbots; n++)
+            addBot(n, false);
+        Nt = cfg.Nbots;
         Balas.clear();
     }
     
-    // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    // XXXXXXXXXXXXXXXX Loop Principal XXXXXXXXXXXXXXXXXX
-    // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-    public void startGame()
-    {
-        Jogo = new Thread() 
-        {
-            public void run() 
-            {
-                setUpAI();
-                while (GameOn()) 
-                {
-                    System.out.print("Loop");
-                    timeEvents();
-                    physics();
-                    controle(); 
-                    System.out.print(" Maps");
-                    exchangeMap(); 
-                    System.out.println(" Waiting player");
-                    waitPlayers();
-                    repaint();
-                    waitAI();
-                }
-                repaint();
-            }
-        };
-        Jogo.start();
-    }
-    
-    // Verifica o término do jogo
-    public boolean GameOn(){
-        for (Figura P : Players)
-            if (!P.alive())
-                RemPlayers.add(P);
-        for (Figura P : RemPlayers)
-            Players.remove(P);
-        return (Players.size()+Bots.size()>2) && tempo<cfg.Tmax;
-    }
-
-    public void waitPlayers()
-    {
-        AllPlayers = false;
-        while (!AllPlayers)
-        {
-            AllPlayers = true;
-            for (User U : cfg.Users)
-                if (!U.interpreted || !U.sent)
-                    AllPlayers = false;
-            try {
-                Thread.sleep(cfg.SleepTime);
-            } catch (InterruptedException ex) {}
-        }
-        for (User U : cfg.Users)
-            U.received = U.interpreted = U.sent = false;
-    }
-        
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXXXX Thread da AI XXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX 
@@ -246,6 +265,23 @@ public class Game extends JPanel
                 wait();
             } catch (InterruptedException e) {}
         }
+    }
+    public void setUpSingleBot(Figura bot)
+    {
+        AI = new Thread(){
+                public void run(){
+                    while (bot.alive()) {
+                        botLook(bot);
+                        botDecide(bot);
+                        botMove(bot);
+                        botWait(bot);
+                    }
+                    Bots.remove(bot);
+                    tempo-=100;
+                }
+            };
+        AIvector.add(AI);
+        AI.start();
     }
     public void setUpAI(){
         for(Figura bot: Bots)
@@ -341,21 +377,29 @@ public class Game extends JPanel
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXX Métodos Periódicos XXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    private void timeEvents(){
+    public void addBala()
+    {
+        Xp = gerador.nextInt(fase.HFase); Yp = gerador.nextInt(fase.LFase);
+        Figura novaBala = new Figura(new ImageIcon(cfg.bala_).getImage(),
+                Xp,Yp, 1, 0, false);
+        while (colisao(novaBala, Xp/4, Yp/4)){
+            Xp = gerador.nextInt(fase.HFase); Yp = gerador.nextInt(fase.LFase);
+            novaBala.setXY(Xp, Yp);
+        }
+        Balas.add(novaBala);
+    }
+    
+    private void timeEvents()
+    {
         if (tempo%cfg.EventTime==0)
         {
             for(Figura bot: Bots) bot.Bullets++;
-            Xp = gerador.nextInt(fase.HFase); Yp = gerador.nextInt(fase.LFase);
-            Figura novaBala = new Figura(new ImageIcon(cfg.bala_).getImage(),
-                Xp,Yp, 1, 0, false);
-            while (colisao(novaBala, Xp/4, Yp/4)){
-                Xp = gerador.nextInt(fase.HFase); Yp = gerador.nextInt(fase.LFase);
-                novaBala.setXY(Xp, Yp);
-            }
-            Balas.add(novaBala);
+            addBala();
             for (Figura P : Players)
                 P.HP+=cfg.recover*(100-P.HP)/20;
             tempo++;
+            if (cfg.Apocalipse)
+                addBot(++Nt, true);
         }
     }
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -551,12 +595,9 @@ public class Game extends JPanel
             else if (P.Keyboard.equals("A"))  mover(P, Cos, -Sin);
             else if (P.Keyboard.equals("D"))  mover(P, -Cos, Sin);
             if (P.Mouse.equals("1"))
-            {
-                System.out.println("click");
                 if (P.atirar())
                     P.vBullet = new Figura(new ImageIcon(cfg.tiro_).getImage(), 
                                 P.getX(), P.getY(), Sin, Cos, true);
-            }
         }
     }
     

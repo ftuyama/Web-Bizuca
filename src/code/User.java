@@ -6,7 +6,7 @@ import java.util.*;
 
 public class User 
 {
-    int port;
+    int port, Njogos;
     String IP, nick, pass, message;
     boolean interpreted = false;
     boolean broadCast = false;
