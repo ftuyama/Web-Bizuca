@@ -8,6 +8,7 @@ public class BD
     final String URL = "jdbc:mysql://localhost:3306/Players";
     final String LOGIN = "root";
     final String SENHA = "3426";
+    boolean connected = true;
     
     public Connection connection;
     
@@ -17,13 +18,16 @@ public class BD
             Class.forName(DRIVER);
             connection = DriverManager.getConnection(URL,LOGIN,SENHA);
             return true;
-        }catch(SQLException | ClassNotFoundException erro){}
+        }catch(SQLException | ClassNotFoundException erro){
+            connected = false;
+        }
         return false;
     }
     public void close()
     {
-        try {
-            connection.close();
-        } catch (SQLException ex) { }
+        if (connected)
+            try {
+                connection.close();
+            } catch (SQLException ex) { }
     }
 }

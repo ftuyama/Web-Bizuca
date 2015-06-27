@@ -7,7 +7,7 @@ import java.util.*;
 public class Figura 
 {
     Config cfg = Config.getInstance();
-    public int dparede, Rvisao, Rparede;
+    public int dparede, Rvisao, Rparede, orig;
     public int ID, HP, Bullets, change, recharge;
     public boolean parede, atirou, olhou, move;
     public boolean moved, toAdd, friendly;
@@ -82,7 +82,7 @@ public class Figura
         this.olhar = new ArrayList<>();
         vBullet = new Figura(); 
         toAdd = moved = atirou = parede = move = false;
-        recharge = change = 0;
+        recharge = change = 0; 
         friendly = F;
         if (F) {
             this.Speed = cfg.PlayerSpeed;
@@ -93,8 +93,10 @@ public class Figura
             this.HP = cfg.BotHP;
         }
     }
-    Figura (Image Im, int X, int Y, float Sin, float Cos, boolean F){
-        this.ID = Nbalas%100; Nbalas++;
+    Figura (Image Im, int X, int Y, float Sin, float Cos, boolean F, int G){
+        if (F) this.ID = Nbalas%100; 
+        else this.ID = Nbalas%100 + 1;
+        Nbalas+=2; orig = G;
         setImagem(Im); x = X; y = Y; Ang = 0; setUp(); 
         friendly = F; Speed = cfg.BulletSpeed;
         this.Sin = Sin; this.Cos = Cos;

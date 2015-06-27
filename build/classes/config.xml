@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Config>
+<Config_Server>
+<Port>4000</Port>
+<Sugar>10</Sugar>
+</Config_Server>
 <Config_Window>
 <Title>Web Bizuca</Title>
 <Window_Width>960</Window_Width>
@@ -40,8 +44,8 @@
 </Config_Gameplay>
 <Config_Menu>
 <Tmax>1280</Tmax>
-<Nbots>5</Nbots>
-<Recover>1</Recover>
+<Nbots>10</Nbots>
+<Recover>-1</Recover>
 <MusicOn>false</MusicOn>
 </Config_Menu>
 </Config>

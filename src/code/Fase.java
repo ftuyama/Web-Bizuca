@@ -7,6 +7,11 @@ public class Fase extends Figura
 {
     int HFase, LFase;
     boolean[][] fase = new boolean[imagem.getHeight(null)][imagem.getWidth(null)];
+    private static Fase mfase;
+    public static Fase getInstance(){
+        if (mfase == null) mfase = new Fase();
+        return mfase;
+    }
     
     public void setFaseConfig(){
         Image imagem = new ImageIcon("src\\imagens\\fase.png").getImage();

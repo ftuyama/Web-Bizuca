@@ -7,6 +7,7 @@ import java.util.*;
 public class Game extends JPanel
 {
     Config cfg = Config.getInstance();
+    Fase fase = Fase.getInstance();
     
     Genesis G = new Genesis();
     Random gerador = new Random();
@@ -14,11 +15,12 @@ public class Game extends JPanel
     private ArrayList<Thread> AIvector = new ArrayList<>();
     private Thread Jogo, AI;
     
+    String infmessage = "";
     float Sin, Cos, Theta;
     int AbsX, AbsY, Xp, Yp, xVet, yVet;
     static int distance, Nt = 0, tempo = 0;
     
-    Fase fase = new Fase();
+    
     Image fasedesign = new ImageIcon(cfg.fasedesign_).getImage();
     Image status = new ImageIcon(cfg.status_).getImage();
     ArrayList<Figura> Balas = new ArrayList<>();
@@ -28,6 +30,7 @@ public class Game extends JPanel
     ArrayList<Figura> Players = new ArrayList<>();
     ArrayList<Figura> RemPlayers = new ArrayList<>();
     ArrayList<Figura> Bots = new ArrayList<>();
+    ArrayList<Figura> RemBots = new ArrayList<>();
 
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     // XXXXXXXXXXXXXXXXX Inicialização XXXXXXXXXXXXXXXXXX
@@ -58,13 +61,14 @@ public class Game extends JPanel
                 setUpAI();
                 while (GameOn()) 
                 {
-                    timeEvents();
-                    physics();
+                    removeDead();
+                    timeEvents(); 
+                    physics();     
                     controle(); 
-                    exchangeMap();
-                    waitPlayers();
-                    repaint();
-                    waitAI();
+                    exchangeMap(); 
+                    waitPlayers(); 
+                    repaint();  
+                    waitAI();      
                 }
                 repaint();
             }
@@ -77,35 +81,59 @@ public class Game extends JPanel
         for (Figura P : Players)
             if (!P.alive())
                 RemPlayers.add(P);
-        for (Figura P : RemPlayers)
+        if (Players.size() == 1 && Bots.isEmpty())
         {
-            for (User W : cfg.Users)
-                if (P.ID == W.port)
-                    sendShutDown(W,"0");
-            Players.remove(P);
-        }
-        if (Players.size() == 1 && Bots.size() == 0)
             for (User W : cfg.Users)
                 if (Players.get(0).ID == W.port)
                     sendShutDown(W,"1");
-        return (Players.size()+Bots.size()>1);
+            return false;
+        }
+        
+        return !Players.isEmpty();
     }
 
     public void waitPlayers()
     {
+        int sugar = 0;
         AllPlayers = false;
-        while (!AllPlayers)
+        while (!AllPlayers && sugar++<cfg.sugar)
         {
             AllPlayers = true;
             for (User U : cfg.Users)
                 if (!U.interpreted || !U.sent)
                     AllPlayers = false;
             try {
-                Thread.sleep(cfg.SleepTime);
+                Thread.sleep(5*cfg.SleepTime);
             } catch (InterruptedException ex) {}
         }
         for (User U : cfg.Users)
             U.received = U.interpreted = U.sent = false;
+    }
+    
+    public void removeDead()
+    {
+        if (!RemTiros.isEmpty()) {
+            for (Figura T : RemTiros)
+                Tiros.remove(T);
+            RemTiros.clear();
+        }
+        if (!RemBalas.isEmpty()) {
+            for (Figura candy : RemBalas)
+                Balas.remove(candy);
+            RemBalas.clear();
+        }
+        if (!RemPlayers.isEmpty())
+            for (Figura P : RemPlayers){
+                for (User W : cfg.Users)
+                    if (P.ID == W.port)
+                        sendShutDown(W,"0");
+                Players.remove(P);
+            }
+        if (!RemBots.isEmpty()) {
+            for (Figura B : RemBots)
+                Bots.remove(B);
+            RemBots.clear();
+        }
     }
     
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -113,12 +141,27 @@ public class Game extends JPanel
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     
     public void initialMap(){
-        new Thread(new sendMap()).start();
+        generateMsg();
+        for (User U : cfg.Users)
+            new Thread(new sendMap(U)).start();
     }
     public void exchangeMap() {
+        generateMsg();
         for (User U : cfg.Users)
+        {
+            new Thread(new sendMap(U)).start();
             new Thread(new receiveMap(U)).start();
-        new Thread(new sendMap()).start();
+        }
+    }
+    public void generateMsg()
+    {
+        infmessage = "@"+Players.size()+","+Bots.size()+","+Tiros.size();
+        for (Figura P : Players)
+            infmessage += ","+P.ID+","+P.getX()+","+P.getY()+","+P.HP+","+P.getAng();
+        for (Figura B : Bots)
+            infmessage += ","+B.ID+","+B.getX()+","+B.getY()+","+B.HP+","+B.getAng2();
+        for (Figura T : Tiros)
+            infmessage += ","+T.ID+","+T.getX()+","+T.getY()+","+T.HP+","+T.getAng2();
     }
     public void sendShutDown(User U, String victory) {
         U.Send("@ShutDown"+victory);
@@ -126,22 +169,17 @@ public class Game extends JPanel
     
     public class sendMap implements Runnable
     {
+        User U;
+        sendMap(User U){
+            this.U = U;
+        }
         public void run() 
         {
-            String message = "@"+Players.size()+","+Bots.size()+","+Tiros.size();
             for (Figura P : Players)
-                message += ","+P.ID+","+P.getX()+","+P.getY()+","+P.HP+","+P.getAng();
-            for (Figura B : Bots)
-                message += ","+B.ID+","+B.getX()+","+B.getY()+","+B.HP+","+B.getAng2();
-            for (Figura T : Tiros)
-                message += ","+T.ID+","+T.getX()+","+T.getY()+","+T.HP+","+T.getAng2();
-            for (User W : cfg.Users) {
-                for (Figura P : Players)
-                    if (P.ID == W.port)
-                        message+=","+P.Bullets;
-                message+=",@";
-                W.Send(message);
-            }
+                if (P.ID == U.port)
+                    infmessage+=","+P.Bullets;
+            infmessage+=",@";
+            U.Send(infmessage);
         }
     }
     
@@ -157,8 +195,8 @@ public class Game extends JPanel
             {
                 U.Listen();
                 while(!U.received)
-                    Thread.sleep(cfg.SleepTime);
-                interpret(U.message, U.port);
+                    Thread.sleep(3*cfg.SleepTime);
+                interpret(U.inmessage, U.port);
                 U.interpreted = true;
             } catch (InterruptedException ex) { }
         }
@@ -171,18 +209,17 @@ public class Game extends JPanel
             if(P.ID == id)
                 ind = Players.indexOf(P);
         
-        if (ind != -1)
-            for (i = 0; i<message.length(); i++)
-                if (++it <= 3)
-                {
-                    info = "";
-                    while(message.charAt(i)!=',')
-                        info+=message.charAt(i++);
-                    if (it == 1)
-                        Players.get(ind).setAng(Integer.parseInt(info));
-                    else if (it == 2) Players.get(ind).Keyboard = info;
-                    else Players.get(ind).Mouse = info;
-                }
+        if (ind != -1 && message.charAt(0)!='@')
+            for (i = 0; i<message.length() && ++it <=3; i++)
+            {
+                info = "";
+                while(message.charAt(i)!=',')
+                    info+=message.charAt(i++);
+                if (it == 1)
+                    Players.get(ind).setAng(Integer.parseInt(info));
+                else if (it == 2) Players.get(ind).Keyboard = info;
+                else Players.get(ind).Mouse = info;
+            }
     }
     
     // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -276,7 +313,8 @@ public class Game extends JPanel
                         botMove(bot);
                         botWait(bot);
                     }
-                    Bots.remove(bot);
+                    bot.moved = true;
+                    RemBots.add(bot);
                     tempo-=100;
                 }
             };
@@ -293,7 +331,8 @@ public class Game extends JPanel
                         botMove(bot);
                         botWait(bot);
                     }
-                    Bots.remove(bot);
+                    bot.moved = true;
+                    RemBots.add(bot);
                     tempo-=100;
                 }
             });
@@ -346,7 +385,7 @@ public class Game extends JPanel
             {
                 if (bot.atirar())
                     bot.vBullet = new Figura(new ImageIcon(cfg.tiro_).getImage(),
-                            bot.getX(), bot.getY(), bot.Sin, bot.Cos, false);
+                            bot.getX(), bot.getY(), bot.Sin, bot.Cos, false, bot.ID);
                 botTurnAround(bot);
                 bot.recharge = cfg.Trecharge;
             }
@@ -381,7 +420,7 @@ public class Game extends JPanel
     {
         Xp = gerador.nextInt(fase.HFase); Yp = gerador.nextInt(fase.LFase);
         Figura novaBala = new Figura(new ImageIcon(cfg.bala_).getImage(),
-                Xp,Yp, 1, 0, false);
+                Xp,Yp, 1, 0, false, 0);
         while (colisao(novaBala, Xp/4, Yp/4)){
             Xp = gerador.nextInt(fase.HFase); Yp = gerador.nextInt(fase.LFase);
             novaBala.setXY(Xp, Yp);
@@ -428,8 +467,8 @@ public class Game extends JPanel
         {
             for (Figura T : Tiros)
             {
-                if (!T.friendly)
-                    for (Figura P : Players)
+                for (Figura P : Players)
+                    if (T.orig != P.ID)
                         if (colisaoFig(T, P, T.Cos, T.Sin)){
                             P.dano(20+gerador.nextInt(20)); 
                             RemTiros.add(T);
@@ -444,11 +483,6 @@ public class Game extends JPanel
                 if (!RemTiros.contains(T))
                     if(!mover(T, T.Cos, T.Sin))
                         RemTiros.add(T);
-            }
-            if (!RemTiros.isEmpty()) {
-                for (Figura T : RemTiros)
-                    Tiros.remove(T);
-                RemTiros.clear();
             }
         }
         
@@ -465,11 +499,6 @@ public class Game extends JPanel
                         if (colisaoFig(Bot, candy, 0, 0)) {
                             Bot.Bullets+=5; RemBalas.add(candy);
                 }
-            }
-            if (!RemBalas.isEmpty()) {
-                for (Figura candy : RemBalas)
-                    Balas.remove(candy);
-                RemBalas.clear();
             }
         }
     }
@@ -535,8 +564,8 @@ public class Game extends JPanel
                 
                 g.setColor(Color.black); g.fillRect(0, 0, cfg.HTela, cfg.VTela);
                 g.setColor(Color.red);   g.fillRect(5, 5, (tempo++)*cfg.HTela/cfg.Tmax, 30);
-                g.setColor(Color.black); g.drawString("Tempo Restante", 10, 17); 
-                                         g.drawString("  "+tempo+"/"+cfg.HTela, 10, 32);
+                g.setColor(Color.black); g.drawString("Tempo decorrido", 10, 17); 
+                                         g.drawString("  "+tempo, 10, 32);
                 g.setColor(Color.red);   g.drawString("Players: "+Players.size(), 10, 70);
                                          g.drawString("Bots: "+Bots.size(), 10, 50);
                 g.drawImage(fasedesign,AbsX, AbsY,this);
@@ -597,7 +626,7 @@ public class Game extends JPanel
             if (P.Mouse.equals("1"))
                 if (P.atirar())
                     P.vBullet = new Figura(new ImageIcon(cfg.tiro_).getImage(), 
-                                P.getX(), P.getY(), Sin, Cos, true);
+                                P.getX(), P.getY(), Sin, Cos, true, P.ID);
         }
     }
     

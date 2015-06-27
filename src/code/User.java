@@ -7,7 +7,8 @@ import java.util.*;
 public class User 
 {
     int port, Njogos;
-    String IP, nick, pass, message;
+    String IP, nick, pass;
+    String inmessage, outmessage;
     boolean interpreted = false;
     boolean broadCast = false;
     boolean received = false;
@@ -51,13 +52,13 @@ public class User
             this.operation = operation;
         }
         
-        public void interpret(String message) {
+        public void interpret(String inmessage) {
             if (operation.equals("login")) {
-                for (i = 0; i < message.length(); i++)
-                    if (message.charAt(i) == '@')
+                for (i = 0; i < inmessage.length(); i++)
+                    if (inmessage.charAt(i) == '@')
                         break;
-                nick = message.substring(0, i);
-                pass = message.substring(i + 1, message.length());
+                nick = inmessage.substring(0, i);
+                pass = inmessage.substring(i + 1, inmessage.length());
             } else if (operation.equals("chat"))
                 broadCast = true;
         }
@@ -68,15 +69,12 @@ public class User
             while (!received) {
                 try {
                     Scanner entrada = new Scanner(cliente.getInputStream());
-                    message = entrada.nextLine();
-                    interpret(message);
-                    cliente = null;
-                    while (cliente == null) 
-                        cliente = servidor.accept();
+                    inmessage = entrada.nextLine();
+                    interpret(inmessage);
                     received = true;
                 } catch (Exception e) {
                     try {
-                        Thread.sleep(50);
+                        Thread.sleep(3);
                     } catch (InterruptedException ex) { }
                 }
             }
@@ -86,14 +84,14 @@ public class User
     class Send implements Runnable 
     {
         Send(String msg) {
-            message = msg;
+            outmessage = msg;
         }
 
         @Override
         public void run() {
             try {
                 PrintStream saida = new PrintStream(cliente.getOutputStream());
-                saida.println(message);
+                saida.println(outmessage);
                 sent = true;
             } catch (IOException ex) {
             }

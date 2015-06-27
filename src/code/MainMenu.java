@@ -8,6 +8,7 @@ import java.net.*;
 public class MainMenu extends javax.swing.JFrame 
 {
     Data BDados = new Data();
+    Fase fase = Fase.getInstance();
     Config cfg = Config.getInstance();
     private String IP, msg;
     int times, port = cfg.defaultPort;
@@ -115,8 +116,8 @@ public class MainMenu extends javax.swing.JFrame
                     if (U.broadCast)
                     {
                         for (User W : cfg.Users)
-                            W.Send(U.message);
-                        display += U.message + "\n";
+                            W.Send(U.inmessage);
+                        display += U.inmessage + "\n";
                         jTextArea1.setText(display);
                     }
                     U.broadCast = false;

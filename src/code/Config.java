@@ -12,8 +12,7 @@ import java.util.*;
 public class Config 
 {
     ArrayList<User> Users = new ArrayList();
-    public int defaultPort = 81;
-    
+ 
     private static Config instance;
     public static Config getInstance(){
         if (instance == null) instance = new Config();
@@ -31,6 +30,7 @@ public class Config
     String player_ = Imagedir_+"player.png";
     String fasedesign_ = Imagedir_+"fasedesign.png";
     
+    public int defaultPort = 80, sugar = 15;
     public int PlayerHP = 100, BotHP = 100, SleepTime = 1, EventTime = 50;
     public int PlayerXinic = 350, PlayerYinic = 350;
     public int PlayerSpeed = 7, BotSpeed = 1, BulletSpeed = 15;
@@ -85,6 +85,17 @@ public class Config
             Document doc = db.newDocument();
 
             Element tagConfig = doc.createElement("Config");
+            
+                Element subTagServer = doc.createElement("Config_Server");
+                
+                    Element ServerPort = doc.createElement("Port");
+                    Element ServerSugar = doc.createElement("Sugar");
+                    
+                    ServerPort.setTextContent(""+4000);
+                    ServerSugar.setTextContent(""+10);
+
+                    subTagServer.appendChild(ServerPort);
+                    subTagServer.appendChild(ServerSugar);
 
                 Element subTagWindowConfig = doc.createElement("Config_Window");
 
@@ -222,6 +233,7 @@ public class Config
                         subTagMenuConfig.appendChild(MenuRecover);
                         subTagMenuConfig.appendChild(MenuMusicOn);
 
+                tagConfig.appendChild(subTagServer);
                 tagConfig.appendChild(subTagWindowConfig);
                 tagConfig.appendChild(subTagImagensConfig);
                 tagConfig.appendChild(subTagGamePlayConfig);
@@ -253,8 +265,14 @@ public class Config
         
         Element raiz = doc.getDocumentElement();
         
-        NodeList endList = raiz.getElementsByTagName("Config_Window");
+        NodeList endList = raiz.getElementsByTagName("Config_Server");
         Element endElement = (Element) endList.item(0);
+        
+        instance.defaultPort = Integer.parseInt(getChildTagValue(endElement, "Port"));
+        instance.sugar = Integer.parseInt(getChildTagValue(endElement,"Sugar"));
+        
+        endList = raiz.getElementsByTagName("Config_Window");
+        endElement = (Element) endList.item(0);
         
         instance.title = getChildTagValue(endElement, "Title");
         instance.HTela = Integer.parseInt(getChildTagValue(endElement,"Window_Width"));
